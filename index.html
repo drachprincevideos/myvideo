@@ -1,313 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HLS Custom Player</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-..." crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <style>
-        .video-container {
-            position: relative;
-            object-fit: cover;
-            max-width: 1280px;
-            height: 720px;
-            overflow: hidden;
-            border: 5px solid #000;
-            border-radius: 10px;
-            background-color: black;
-            margin: auto;
-        }
-        video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-            transition: transform 0.3s ease;
-            background: black;
-        }
-        .custom-play-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.7);
-            border: none;
-            color: white;
-            font-size: 40px;
-            padding: 20px;
-            cursor: pointer;
-            z-index: 15;
-            border-radius: 50%;
-        }
-        .custom-play-btn.hidden {
-            display: none;
-        }
-        .controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            color: #fff;
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            box-sizing: border-box;
-            z-index: 10;
-            opacity: 1;
-            transition: opacity 0.5s ease;
-        }
-        .controls.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .play-btn, .volume-control, .fullscreen-btn {
-            font-size: 24px;
-            cursor: pointer;
-            z-index: 15;
-        }
-        .fullscreen-btn {
-            padding-left: 10px;
-            font-size: 24px;
-            cursor: pointer;
-        }
-        .progress-bar-container {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 10px;
-        }
-        .progress-bar {
-            width: 95%;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.3);
-            position: relative;
-            border-radius: 3px;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        .progress {
-            height: 100%;
-            background: #fff;
-            width: 0;
-            transition: width 0.1s;
-        }
-        .progress-thumb {
-            width: 12px;
-            height: 12px;
-            background: #fff;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            cursor: pointer;
-        }
-        .volume-slider-container {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-        .volume-slider {
-            width: 80px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.3);
-            position: relative;
-            margin-left: 10px;
-            border-radius: 3px;
-        }
-        .volume-progress {
-            height: 100%;
-            background: #fff;
-            width: 50%;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        .volume-thumb {
-            width: 12px;
-            height: 12px;
-            background: #fff;
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            cursor: pointer;
-        }
-        #loadingOverlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 15;
-            display: none;
-        }
-        .spinner {
-            border: 8px solid rgba(0, 0, 0, 0.1);
-            border-radius: 50%;
-            border-top: 8px solid #ffffff;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @media (max-width: 768px) {
-            .video-container {
-                height: 250px;
-            }
-            .volume-slider {
-                display: none;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HLS Video Player</title>
+  <style>
+    body {
+      background: #000;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    video {
+      width: 100%;
+      max-width: 1280px;
+      height: auto;
+      background: #000;
+    }
+  </style>
 </head>
 <body>
-<div class="video-container" id="videoContainer">
-    <video id="myVideo" preload="auto" poster="https://via.placeholder.com/1280x720?text=Loading+Video">
-        Your browser does not support the video tag.
-    </video>
-    <button class="custom-play-btn" id="customPlayPauseButton"><i class="fas fa-play"></i></button>
-    <div class="controls" id="videoControls">
-        <div class="play-btn" id="playPauseButton"><i class="fas fa-play"></i></div>
-        <div class="progress-bar-container">
-            <div class="progress-bar" id="progressBar">
-                <div class="progress" id="progress"></div>
-                <div class="progress-thumb" id="progressThumb"></div>
-            </div>
-        </div>
-        <div class="volume-slider-container">
-            <div class="volume-control" id="volumeControl"><i class="fas fa-volume-up"></i></div>
-            <div class="volume-slider" id="volumeSlider">
-                <div class="volume-progress" id="volumeProgress"></div>
-                <div class="volume-thumb" id="volumeThumb"></div>
-            </div>
-        </div>
-        <div class="fullscreen-btn" id="fullscreenButton"><i class="fas fa-expand"></i></div>
-    </div>
-    <div id="loadingOverlay"><div class="spinner"></div></div>
-</div>
+  <video id="video" controls autoplay></video>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const video = document.getElementById('myVideo');
-    const container = document.getElementById('videoContainer');
-    const controls = document.getElementById('videoControls');
-    const videoSrc = "playlist.m3u8"; // 👈 Put your m3u8 here
-    const customPlayPauseButton = document.getElementById('customPlayPauseButton');
-    const playPauseButton = document.getElementById('playPauseButton');
-    const progress = document.getElementById('progress');
-    const progressThumb = document.getElementById('progressThumb');
-    const progressBar = document.getElementById('progressBar');
-    const volumeControl = document.getElementById('volumeControl');
-    const volumeSlider = document.getElementById('volumeSlider');
-    const volumeProgress = document.getElementById('volumeProgress');
-    const volumeThumb = document.getElementById('volumeThumb');
-    const loadingOverlay = document.getElementById('loadingOverlay');
-    const fullscreenButton = document.getElementById('fullscreenButton');
-    let isDragging = false;
-    let isVolumeDragging = false;
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    const video = document.getElementById('video');
+    const videoSrc = 'playlist.m3u8'; // Same folder as index.html
 
     if (Hls.isSupported()) {
-        const hls = new Hls();
-        hls.loadSource(videoSrc);
-        hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
-        hls.on(Hls.Events.ERROR, (event, data) => {
-            console.error('HLS error:', data);
-            loadingOverlay.style.display = 'none';
-        });
+      const hls = new Hls();
+      hls.loadSource(videoSrc);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, function() {
+        video.play();
+      });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = videoSrc;
+      // Safari support
+      video.src = videoSrc;
+      video.addEventListener('loadedmetadata', function() {
+        video.play();
+      });
     }
-
-    function togglePlayPause() {
-        if (video.paused) {
-            video.play();
-        } else {
-            video.pause();
-        }
-    }
-    playPauseButton.addEventListener('click', togglePlayPause);
-    customPlayPauseButton.addEventListener('click', togglePlayPause);
-    video.addEventListener('play', () => {
-        customPlayPauseButton.classList.add('hidden');
-        playPauseButton.innerHTML = '<i class="fas fa-pause"></i>';
-    });
-    video.addEventListener('pause', () => {
-        customPlayPauseButton.classList.remove('hidden');
-        playPauseButton.innerHTML = '<i class="fas fa-play"></i>';
-    });
-
-    video.addEventListener('timeupdate', () => {
-        const percent = (video.currentTime / video.duration) * 100;
-        progress.style.width = percent + '%';
-        progressThumb.style.left = percent + '%';
-    });
-    progressBar.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        seekVideo(e);
-    });
-    document.addEventListener('mousemove', (e) => {
-        if (isDragging) seekVideo(e);
-    });
-    document.addEventListener('mouseup', () => isDragging = false);
-    function seekVideo(e) {
-        const rect = progressBar.getBoundingClientRect();
-        const percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-        progress.style.width = percent + '%';
-        progressThumb.style.left = percent + '%';
-        video.currentTime = (percent / 100) * video.duration;
-    }
-
-    volumeControl.addEventListener('click', () => {
-        video.muted = !video.muted;
-        volumeControl.innerHTML = video.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
-    });
-    volumeSlider.addEventListener('mousedown', (e) => {
-        isVolumeDragging = true;
-        adjustVolume(e);
-    });
-    document.addEventListener('mousemove', (e) => {
-        if (isVolumeDragging) adjustVolume(e);
-    });
-    document.addEventListener('mouseup', () => isVolumeDragging = false);
-    function adjustVolume(e) {
-        const rect = volumeSlider.getBoundingClientRect();
-        const percent = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-        volumeProgress.style.width = percent + '%';
-        volumeThumb.style.left = percent + '%';
-        video.volume = percent / 100;
-    }
-
-    fullscreenButton.addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-            container.requestFullscreen().catch(err => console.error(err));
-        } else {
-            document.exitFullscreen();
-        }
-    });
-
-    video.addEventListener('waiting', () => loadingOverlay.style.display = 'flex');
-    video.addEventListener('playing', () => loadingOverlay.style.display = 'none');
-
-    let hideControlsTimeout;
-    container.addEventListener('mousemove', () => {
-        controls.classList.remove('hidden');
-        clearTimeout(hideControlsTimeout);
-        hideControlsTimeout = setTimeout(() => controls.classList.add('hidden'), 3000);
-    });
-});
-</script>
+  </script>
 </body>
 </html>
